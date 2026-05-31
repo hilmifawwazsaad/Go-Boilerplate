@@ -1,0 +1,12 @@
+{
+  "editor.formatOnSave": true,
+  "editor.insertSpaces": true,
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.insertSpaces": false
+  },
+  "go.lintTool": "golangci-lint",
+  "go.lintOnSave": "workspace",
+  "go.vetOnSave": "workspace",
+  "go.formatTool": "gofmt"
+}
