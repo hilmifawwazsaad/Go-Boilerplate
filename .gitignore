@@ -1,0 +1,26 @@
+# Binary hasil build
+bin/
+dist/
+*.exe
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependency cache
+vendor/
+
+# Test output
+coverage.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

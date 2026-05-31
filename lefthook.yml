@@ -1,0 +1,62 @@
+pre-commit:
+  commands:
+    fmt:
+      glob: "*.go"
+      run: gofmt -w .
+    vet:
+      run: go vet ./...
+    lint:
+      run: golangci-lint run
+
+commit-msg:
+  commands:
+    conventional-commits:
+      run: |
+        MSG=$(cat {1})
+        PATTERN="^(feat|fix|refactor|docs|test|chore|style|perf|ci|build|revert)(\(.+\))?: .{1,100}$"
+        if ! echo "$MSG" | grep -Eq "$PATTERN"; then
+          echo ""
+          echo "✗ Format commit message salah."
+          echo ""
+          echo "  Gunakan: <type>(<scope>): <subject>"
+          echo "  Contoh:  feat(user): add login endpoint"
+          echo "           fix(auth): handle expired token"
+          echo ""
+          echo "  Tipe yang valid:"
+          echo "  feat fix refactor docs test chore style perf ci build revert"
+          echo ""
+          exit 1
+        fi
+
+post-merge:
+  commands:
+    tidy:
+      run: go mod tidy
+
+pre-push:
+  commands:
+    lint-strict:
+      run: golangci-lint run --max-issues-per-linter 0 --max-same-issues 0
+    commitlint:
+      run: |
+        PATTERN="^(feat|fix|refactor|docs|test|chore|style|perf|ci|build|revert)(\(.+\))?: .{1,100}$"
+        UPSTREAM=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
+
+        if [ -z "$UPSTREAM" ]; then
+          echo "⚠ Tidak ada upstream branch, skip commitlint."
+          exit 0
+        fi
+
+        INVALID=$(git log "$UPSTREAM..HEAD" --pretty=format:"%s" | grep -Ev "$PATTERN")
+
+        if [ -n "$INVALID" ]; then
+          echo ""
+          echo "✗ Commit message berikut tidak sesuai Conventional Commits:"
+          echo "$INVALID" | while IFS= read -r MSG; do
+            echo "  - $MSG"
+          done
+          echo ""
+          echo "  Gunakan: <type>(<scope>): <subject>"
+          echo ""
+          exit 1
+        fi
