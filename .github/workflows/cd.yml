@@ -1,0 +1,73 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # ------------------------------------------------
+      # OPTION 1: Deploy ke VPS via SSH
+      # Build binary di CI, kirim ke VPS, restart service
+      # Secrets yang dibutuhkan:
+      #   - SSH_HOST
+      #   - SSH_USER
+      #   - SSH_PRIVATE_KEY
+      # ------------------------------------------------
+      # - name: Build binary
+      #   run: GOOS=linux GOARCH=amd64 go build -o bin/server ./cmd/server
+      #
+      # - name: Deploy ke VPS
+      #   uses: appleboy/ssh-action@v1
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     username: ${{ secrets.SSH_USER }}
+      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     script: |
+      #       cd /var/www/your-app
+      #       git pull origin main
+      #       go build -o bin/server ./cmd/server
+      #       sudo systemctl restart your-app
+
+      # ------------------------------------------------
+      # OPTION 2: Build & Push Docker Image
+      # Secrets yang dibutuhkan:
+      #   - DOCKER_USERNAME
+      #   - DOCKER_PASSWORD
+      # ------------------------------------------------
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: ${{ secrets.DOCKER_USERNAME }}/your-app:latest
+
+      # ------------------------------------------------
+      # OPTION 3: Deploy ke Fly.io
+      # Secrets yang dibutuhkan:
+      #   - FLY_API_TOKEN
+      # ------------------------------------------------
+      # - name: Deploy ke Fly.io
+      #   uses: superfly/flyctl-actions/setup-flyctl@master
+      # - run: flyctl deploy --remote-only
+      #   env:
+      #     FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
